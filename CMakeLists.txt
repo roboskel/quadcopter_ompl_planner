@@ -3,29 +3,26 @@ project(quadcopter_ompl_planner)
 
 add_compile_options(-std=c++14)
 
-# find_package(ODE REQUIRED)
 find_package(ompl REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
   include
-  # ${ODE_INCLUDE_DIRS}
   ${OMPL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
-add_library (${PROJECT_NAME} SHARED)
+add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME} PRIVATE src/quadcopter_ompl.cpp)
 
 target_link_libraries(${PROJECT_NAME} 
     ${OMPL_LIBRARIES} 
-    # ${ODE_LIBRARIES}
     ${EIGEN3_LIBRARIES})
 
-# target_include_directories(
-    # ${PROJECT_NAME}
-    # PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-           # $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+add_executable(test_${PROJECT_NAME} test/test.cpp)
+
+target_link_libraries(test_${PROJECT_NAME} 
+    ${PROJECT_NAME})
 
 install(
     TARGETS ${PROJECT_NAME}
