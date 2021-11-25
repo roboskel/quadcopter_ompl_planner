@@ -27,27 +27,23 @@ namespace quadcopter_ompl {
         control_bounds.setHigh(1.0);
         control_space->setBounds(control_bounds);
 
-        // NOTE I could initialize a SimpleSetup here and get the SpaceInformation object
-        space_information = std::make_shared<ompl::control::SpaceInformation>(state_space, control_space);
-        space_information->setStateValidityChecker(
+        setup = std::make_shared<ompl::control::SimpleSetup>(control_space);
+        setup->setStateValidityChecker(
             [&](const ompl::base::State* s) {
                 return this->isStateValid(s);
             }
         );
 
-        solver = std::make_shared<ompl::control::ODEBasicSolver<>>(space_information, 
+        solver = std::make_shared<ompl::control::ODEBasicSolver<>>(setup->getSpaceInformation(), 
             [&](const ompl::control::ODESolver::StateType& s, const ompl::control::Control* c, ompl::control::ODESolver::StateType& r) {
                 this->quadKinematicModelSolver(s,c,r);
             }
         );
-        space_information->setStatePropagator(ompl::control::ODESolver::getStatePropagator(solver,
+        setup->setStatePropagator(ompl::control::ODESolver::getStatePropagator(solver,
             [&](const ompl::base::State* s, const ompl::control::Control* c, const double d, ompl::base::State* r) {
                 this->postIntegrationCallback(s,c,d,r);
             }
         ));
-
-        space_information->setup();
-
     }
 
     void QuadcopterOMPL::quadKinematicModelSolver(const ompl::control::ODESolver::StateType& state, const ompl::control::Control* control, ompl::control::ODESolver::StateType& res) {
@@ -71,4 +67,54 @@ namespace quadcopter_ompl {
         return this->resolution;
     }
 
+    std::shared_ptr<ompl::control::SimpleSetup> QuadcopterOMPL::getSetup() {
+        return this->setup;
+    }
+
+    void QuadcopterOMPL::setStart(double x, double y, double z, double qx, double qy, double qz, double qw) {
+        ompl::base::ScopedState<ompl::base::SE3StateSpace> s(state_space);
+        s->setXYZ(x,y,z);
+        s->rotation().x = qx;
+        s->rotation().y = qy;
+        s->rotation().z = qz;
+        s->rotation().w = qw;
+        setup->setStartState(s);
+    }
+
+    void QuadcopterOMPL::setGoal(double x, double y, double z, double qx, double qy, double qz, double qw) {
+        ompl::base::ScopedState<ompl::base::SE3StateSpace> s(state_space);
+        s->setXYZ(x,y,z);
+        s->rotation().x = qx;
+        s->rotation().y = qy;
+        s->rotation().z = qz;
+        s->rotation().w = qw;
+        setup->setGoalState(s);
+    }
+
+    void QuadcopterOMPL::setStartAndGoal(double sx, double sy, double sz, double sqx, double sqy, double sqz, double sqw, double gx, double gy, double gz, double gqx, double gqy, double gqz, double gqw) {
+        ompl::base::ScopedState<ompl::base::SE3StateSpace> ss(state_space);
+        ss->setXYZ(sx,sy,sz);
+        ss->rotation().x = sqx;
+        ss->rotation().y = sqy;
+        ss->rotation().z = sqz;
+        ss->rotation().w = sqw;
+
+        ompl::base::ScopedState<ompl::base::SE3StateSpace> sg(state_space);
+        sg->setXYZ(gx,gy,gz);
+        sg->rotation().x = gqx;
+        sg->rotation().y = gqy;
+        sg->rotation().z = gqz;
+        sg->rotation().w = gqw;
+
+        setup->setStartAndGoalStates(ss,sg, this->resolution);
+    }
+
+    std::tuple<ompl::base::PlannerStatus, ompl::control::PathControl> QuadcopterOMPL::solve(double duration) {
+        ompl::base::PlannerStatus ps = setup->solve(duration);
+        ompl::control::PathControl pc(setup->getSpaceInformation());
+        if (setup->haveSolutionPath()) {
+            pc = setup->getSolutionPath();
+        }
+        return std::tuple<ompl::base::PlannerStatus, ompl::control::PathControl>(ps,pc);
+    }
 }
