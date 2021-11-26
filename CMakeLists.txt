@@ -13,7 +13,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED)
-target_sources(${PROJECT_NAME} PRIVATE src/quadcopter_ompl.cpp)
+target_sources(${PROJECT_NAME} PRIVATE src/quadcopter_ompl.cpp src/quadcopter.cpp)
 
 target_link_libraries(${PROJECT_NAME} 
     ${OMPL_LIBRARIES} 

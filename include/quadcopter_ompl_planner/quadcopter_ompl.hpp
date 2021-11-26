@@ -3,6 +3,7 @@
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/control/SpaceInformation.h>
+#include <quadcopter_ompl_planner/quadcopter.hpp>
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/control/ODESolver.h>
 #include <ompl/config.h>
