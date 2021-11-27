@@ -14,11 +14,19 @@ class Quadcopter {
     protected:
         void thrust();
         void torque();
+        void rotation();
         void acceleration();
+        void thetadot2omega();
+        void omega2thetadot();
         void angular_acceleration();
 
     private:
-        double L, m, k, g;
+        // Quadcopter properties
+        // arm length, mass, thrust coefficient
+        double L, m, k;
+        // NOTE physics (might need to remove them or aplpy them to ODE)
+        // gravity, drag coefficient
+        double g, kd;
         Eigen::Vector3d x;
         Eigen::Vector3d xdot;
         Eigen::Vector3d theta;
